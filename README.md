@@ -1,7 +1,7 @@
 
 MAVS : Multi-Agent AI Validation Suite
 
-AlphaVerify is an autonomous, multi-agent AI validation system that redefines modern talent acquisition. Moving far beyond traditional keyword-matching Applicant Tracking Systems (ATS), AlphaVerify extracts the true technical complexity of a candidate's projects, maps it against the hidden technical prerequisites of a Job Description, and generates custom validation questions to instantly verify engineering claims.
+an autonomous, multi-agent AI validation system that redefines modern talent acquisition. Moving far beyond traditional keyword-matching Applicant Tracking Systems (ATS), AlphaVerify extracts the true technical complexity of a candidate's projects, maps it against the hidden technical prerequisites of a Job Description, and generates custom validation questions to instantly verify engineering claims.
 
 ----------------------------------------------------------------------------------------
 
