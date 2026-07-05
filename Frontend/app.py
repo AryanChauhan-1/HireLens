@@ -220,7 +220,7 @@ def inject_css():
     .av-topbar {{
         background: linear-gradient(135deg, var(--primary), var(--secondary));
         color: #fff !important;
-        padding: 0.9rem 1.5rem;
+        padding: 1.8rem 1.5rem;
         border-radius: var(--radius-lg);
         display: flex;
         align-items: center;
