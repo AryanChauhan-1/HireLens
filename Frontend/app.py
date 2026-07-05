@@ -57,46 +57,143 @@ def init_state():
 
 init_state()
 
-# ─── THEME CSS ───────────────────────────────────────────────────────────────────
+# ─── THEME / DESIGN SYSTEM ──────────────────────────────────────────────────────
+# Centralized color palette. Every visual element pulls from these CSS variables
+# so Light and Dark modes stay perfectly consistent across the whole app.
+def get_theme_tokens(dark: bool) -> dict:
+    if dark:
+        return {
+            # Surfaces
+            "bg":            "#0B1120",
+            "card":          "#141B2D",
+            "card_alt":      "#1B2436",
+            "sidebar":       "#0B1120",
+            "border":        "#2A3448",
+            "input_bg":      "#161F32",
+            "input_text":    "#E7EBF3",
+            # Text
+            "text":          "#E7EBF3",
+            "subtext":       "#93A0B7",
+            "heading":       "#F5F7FA",
+            # Brand / accent
+            "primary":       "#818CF8",
+            "primary_hover": "#6366F1",
+            "primary_soft":  "rgba(129,140,248,0.14)",
+            "secondary":     "#312E81",
+            # Semantic (solid, for text/graphs)
+            "success":       "#34D399",
+            "warning":       "#FBBF24",
+            "error":         "#F87171",
+            "info":          "#60A5FA",
+            # Semantic (pill badges)
+            "success_bg":    "rgba(52,211,153,0.14)",   "success_text": "#4ADE80",
+            "warning_bg":    "rgba(251,191,36,0.14)",   "warning_text": "#FBBF24",
+            "error_bg":      "rgba(248,113,113,0.14)",  "error_text":   "#F87171",
+            "info_bg":       "rgba(96,165,250,0.14)",   "info_text":    "#60A5FA",
+            # Code / terminal-style block (kept exactly as the well-received dark look)
+            "code_bg":       "#0F172A",
+            "code_text":     "#E2E8F0",
+            "code_border":   "#818CF8",
+            # Upload zone
+            "upload_bg":     "#141B2D",
+            # Shadows (stronger, since dark surfaces don't show soft shadows well)
+            "shadow_sm":     "0 1px 2px rgba(0,0,0,0.35)",
+            "shadow_md":     "0 6px 18px rgba(0,0,0,0.40)",
+            "shadow_lg":     "0 14px 34px rgba(0,0,0,0.50)",
+        }
+    else:
+        return {
+            # Surfaces
+            "bg":            "#F7F8FB",
+            "card":          "#FFFFFF",
+            "card_alt":      "#F3F5F9",
+            "sidebar":       "#FFFFFF",
+            "border":        "#E7E9F0",
+            "input_bg":      "#FFFFFF",
+            "input_text":    "#1E2430",
+            # Text
+            "text":          "#1E2430",
+            "subtext":       "#657084",
+            "heading":       "#161B26",
+            # Brand / accent
+            "primary":       "#4F46E5",
+            "primary_hover": "#4338CA",
+            "primary_soft":  "#EEF0FF",
+            "secondary":     "#7C3AED",
+            # Semantic (solid, for text/graphs)
+            "success":       "#16A34A",
+            "warning":       "#D97706",
+            "error":         "#DC2626",
+            "info":          "#2563EB",
+            # Semantic (pill badges)
+            "success_bg":    "#DCFCE7",  "success_text": "#166534",
+            "warning_bg":    "#FEF3C7",  "warning_text": "#92400E",
+            "error_bg":      "#FEE2E2",  "error_text":   "#991B1B",
+            "info_bg":       "#DBEAFE",  "info_text":    "#1E40AF",
+            # Code / terminal-style block — fixed for readability on light backgrounds
+            "code_bg":       "#F5F6FB",
+            "code_text":     "#232A3B",
+            "code_border":   "#4F46E5",
+            # Upload zone
+            "upload_bg":     "#EEF0FF",
+            # Shadows
+            "shadow_sm":     "0 1px 2px rgba(16,24,40,0.04)",
+            "shadow_md":     "0 4px 14px rgba(16,24,40,0.07)",
+            "shadow_lg":     "0 12px 30px rgba(16,24,40,0.10)",
+        }
+
+
 def inject_css():
     dark = st.session_state.dark_mode
-    if dark:
-        bg         = "#0F172A"
-        card_bg    = "#1E293B"
-        sidebar_bg = "#0F172A"
-        text       = "#F1F5F9"
-        sub_text   = "#94A3B8"
-        border     = "#334155"
-        input_bg   = "#1E293B"
-        input_text = "#F1F5F9"
-    else:
-        bg         = "#F8FAFC"
-        card_bg    = "#FFFFFF"
-        sidebar_bg = "#FFFFFF"
-        text       = "#1E293B"
-        sub_text   = "#64748B"
-        border     = "#E2E8F0"
-        input_bg   = "#FFFFFF"
-        input_text = "#1E293B"
+    t = get_theme_tokens(dark)
 
     st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
     :root {{
-        --primary:   #2563EB;
-        --secondary: #1E3A8A;
-        --success:   #22C55E;
-        --warning:   #F59E0B;
-        --error:     #EF4444;
-        --bg:        {bg};
-        --card:      {card_bg};
-        --sidebar:   {sidebar_bg};
-        --text:      {text};
-        --subtext:   {sub_text};
-        --border:    {border};
-        --input-bg:  {input_bg};
-        --input-txt: {input_text};
+        --primary:       {t['primary']};
+        --primary-hover: {t['primary_hover']};
+        --primary-soft:  {t['primary_soft']};
+        --secondary:     {t['secondary']};
+
+        --success:       {t['success']};
+        --warning:       {t['warning']};
+        --error:         {t['error']};
+        --info:          {t['info']};
+
+        --success-bg:    {t['success_bg']};
+        --success-text:  {t['success_text']};
+        --warning-bg:    {t['warning_bg']};
+        --warning-text:  {t['warning_text']};
+        --error-bg:      {t['error_bg']};
+        --error-text:    {t['error_text']};
+        --info-bg:       {t['info_bg']};
+        --info-text:     {t['info_text']};
+
+        --bg:        {t['bg']};
+        --card:      {t['card']};
+        --card-alt:  {t['card_alt']};
+        --sidebar:   {t['sidebar']};
+        --text:      {t['text']};
+        --subtext:   {t['subtext']};
+        --heading:   {t['heading']};
+        --border:    {t['border']};
+        --input-bg:  {t['input_bg']};
+        --input-txt: {t['input_text']};
+
+        --code-bg:     {t['code_bg']};
+        --code-text:   {t['code_text']};
+        --code-border: {t['code_border']};
+        --upload-bg:   {t['upload_bg']};
+
+        --shadow-sm: {t['shadow_sm']};
+        --shadow-md: {t['shadow_md']};
+        --shadow-lg: {t['shadow_lg']};
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
     }}
 
     html, body, [class*="css"] {{
@@ -121,10 +218,10 @@ def inject_css():
 
     /* ── Topbar ── */
     .av-topbar {{
-        background: var(--primary);
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
         color: #fff !important;
         padding: 0.9rem 1.5rem;
-        border-radius: 12px;
+        border-radius: var(--radius-lg);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -132,10 +229,10 @@ def inject_css():
         font-family: 'Poppins', sans-serif;
         font-weight: 700;
         font-size: 1.25rem;
-        box-shadow: 0 4px 20px rgba(37,99,235,0.25);
+        box-shadow: var(--shadow-md);
     }}
     .av-topbar .nav-links {{ display: flex; gap: 1.2rem; font-size: 0.88rem; font-weight: 500; }}
-    .av-topbar .nav-links span {{ cursor: pointer; opacity: 0.9; }}
+    .av-topbar .nav-links span {{ cursor: pointer; opacity: 0.9; transition: opacity 0.15s; }}
     .av-topbar .nav-links span:hover {{ opacity: 1; text-decoration: underline; }}
 
     /* ── Metric Cards ── */
@@ -143,29 +240,30 @@ def inject_css():
     .av-metric {{
         background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: var(--radius-md);
         padding: 1rem 1.4rem;
         flex: 1; min-width: 140px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        transition: transform 0.15s;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.15s, box-shadow 0.15s;
     }}
-    .av-metric:hover {{ transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37,99,235,0.1); }}
+    .av-metric:hover {{ transform: translateY(-2px); box-shadow: var(--shadow-md); }}
     .av-metric .label {{ font-size: 0.78rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.05em; }}
     .av-metric .value {{ font-family: 'Poppins', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--primary); margin-top: 0.2rem; }}
     .av-metric .badge {{ display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; margin-top: 0.3rem; }}
-    .badge-success {{ background: #DCFCE7; color: #166534; }}
-    .badge-warning {{ background: #FEF3C7; color: #92400E; }}
-    .badge-error   {{ background: #FEE2E2; color: #991B1B; }}
-    .badge-info    {{ background: #DBEAFE; color: #1E40AF; }}
+
+    .badge-success {{ background: var(--success-bg); color: var(--success-text); }}
+    .badge-warning {{ background: var(--warning-bg); color: var(--warning-text); }}
+    .badge-error   {{ background: var(--error-bg);   color: var(--error-text); }}
+    .badge-info    {{ background: var(--info-bg);    color: var(--info-text); }}
 
     /* ── Analysis Panels ── */
     .av-panel {{
         background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: var(--radius-md);
         padding: 1.1rem 1.3rem;
         height: 100%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        box-shadow: var(--shadow-sm);
     }}
     .av-panel h4 {{
         font-family: 'Poppins', sans-serif;
@@ -175,40 +273,72 @@ def inject_css():
         margin: 0 0 0.6rem 0;
         text-transform: uppercase;
         letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.55rem;
     }}
     .av-panel p, .av-panel li {{ font-size: 0.88rem; color: var(--text); line-height: 1.6; }}
     .av-panel ul {{ padding-left: 1.1rem; margin: 0; }}
 
-    /* ── Code / question box ── */
+    /* ── Code / question box ──
+         Uses dedicated --code-* tokens (not raw bg/card) so it reads perfectly
+         in BOTH themes: a crisp dark terminal card in Dark Mode, and a soft
+         indigo-tinted card in Light Mode — never a washed-out dark box on
+         a light page. */
     .av-code-box {{
-        background: #0F172A;
-        color: #E2E8F0;
-        border-radius: 8px;
-        padding: 0.8rem 1rem;
+        background: var(--code-bg);
+        color: var(--code-text);
+        border-radius: var(--radius-sm);
+        padding: 0.9rem 1.1rem;
         font-family: 'Inter', monospace;
-        font-size: 0.82rem;
+        font-size: 0.85rem;
         margin-top: 0.5rem;
-        border-left: 3px solid var(--primary);
-        line-height: 1.7;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--code-border);
+        line-height: 1.8;
+        box-shadow: var(--shadow-sm);
     }}
+    .av-code-box ol {{ color: var(--code-text) !important; }}
+    .av-code-box li {{ color: var(--code-text) !important; margin-bottom: 0.35rem; }}
+    .av-code-box li::marker {{ color: var(--code-border); font-weight: 600; }}
 
     /* ── Upload zone ── */
     .av-upload-zone {{
         border: 2px dashed var(--primary);
-        border-radius: 12px;
+        border-radius: var(--radius-lg);
         padding: 2rem;
         text-align: center;
-        background: {'#1E293B' if dark else '#EFF6FF'};
-        transition: background 0.2s;
+        background: var(--upload-bg);
+        color: var(--text);
+        transition: background 0.2s, border-color 0.2s;
     }}
+    .av-upload-zone:hover {{ border-color: var(--primary-hover); }}
 
     /* ── Buttons ── */
     div[data-testid="stButton"] > button {{
-        border-radius: 8px !important;
+        border-radius: var(--radius-sm) !important;
         font-family: 'Poppins', sans-serif !important;
         font-weight: 600 !important;
         font-size: 0.88rem !important;
         transition: all 0.2s !important;
+        border: 1px solid var(--border) !important;
+        background: var(--card) !important;
+        color: var(--text) !important;
+    }}
+    div[data-testid="stButton"] > button:hover {{
+        border-color: var(--primary) !important;
+        color: var(--primary) !important;
+        box-shadow: var(--shadow-sm);
+    }}
+    div[data-testid="stButton"] > button[kind="primary"] {{
+        background: linear-gradient(135deg, var(--primary), var(--primary-hover)) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: var(--shadow-sm);
+    }}
+    div[data-testid="stButton"] > button[kind="primary"]:hover {{
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+        color: #fff !important;
     }}
 
     /* ── Notification badge ── */
@@ -225,11 +355,11 @@ def inject_css():
     .auth-card {{
         background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 16px;
+        border-radius: var(--radius-lg);
         padding: 2.5rem 2rem;
         max-width: 420px;
         margin: 4rem auto;
-        box-shadow: 0 8px 32px rgba(37,99,235,0.12);
+        box-shadow: var(--shadow-lg);
     }}
     .auth-card h2 {{
         font-family: 'Poppins', sans-serif;
@@ -244,12 +374,13 @@ def inject_css():
     .report-card {{
         background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: var(--radius-md);
         padding: 1rem 1.2rem;
         margin-bottom: 0.8rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        box-shadow: var(--shadow-sm);
     }}
 
     /* ── Toast notification ── */
@@ -259,10 +390,11 @@ def inject_css():
         background: var(--primary);
         color: #fff;
         padding: 0.7rem 1.2rem;
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         font-size: 0.85rem;
         z-index: 9999;
         animation: fadeIn 0.3s ease;
+        box-shadow: var(--shadow-md);
     }}
     @keyframes fadeIn {{ from {{ opacity:0; transform:translateY(-10px); }} to {{ opacity:1; transform:translateY(0); }} }}
 
@@ -271,10 +403,202 @@ def inject_css():
         background: var(--input-bg) !important;
         color: var(--input-txt) !important;
         border-color: var(--border) !important;
+        border-radius: var(--radius-sm) !important;
+    }}
+    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="select"] > div {{
+        background: var(--input-bg) !important;
+        border-color: var(--border) !important;
+        border-radius: var(--radius-sm) !important;
+    }}
+    div[data-baseweb="input"]:focus-within, div[data-baseweb="textarea"]:focus-within {{
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 1px var(--primary) !important;
+    }}
+
+    /* ── Tabs ── */
+    button[data-baseweb="tab"] {{
+        color: var(--subtext) !important;
+        font-family: 'Poppins', sans-serif !important;
+        font-weight: 600 !important;
+    }}
+    button[data-baseweb="tab"][aria-selected="true"] {{
+        color: var(--primary) !important;
+    }}
+    div[data-baseweb="tab-highlight"] {{
+        background-color: var(--primary) !important;
+    }}
+    div[data-baseweb="tab-border"] {{
+        background-color: var(--border) !important;
+    }}
+
+    /* ── Expander ── */
+    details, div[data-testid="stExpander"] {{
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-md) !important;
+        box-shadow: var(--shadow-sm);
+    }}
+
+    /* ── Alerts (st.success / st.error / st.warning / st.info) ── */
+    div[data-testid="stAlert"] {{
+        border-radius: var(--radius-md) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow-sm);
+    }}
+
+    /* ── Progress bar ── */
+    div[data-testid="stProgress"] > div > div {{
+        background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+    }}
+
+    /* ── st.metric ── */
+    div[data-testid="stMetric"] {{
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.8rem 1rem;
+        box-shadow: var(--shadow-sm);
     }}
 
     /* ── Divider ── */
     hr {{ border-color: var(--border) !important; }}
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {{ width: 8px; height: 8px; }}
+    ::-webkit-scrollbar-track {{ background: transparent; }}
+    ::-webkit-scrollbar-thumb {{ background: var(--border); border-radius: 999px; }}
+
+    /* ══════════════════════════════════════════════════════════════════
+       The blocks below theme Streamlit-native elements that are NOT
+       covered above. They previously fell back to Streamlit's default
+       (white) styling and were the source of the "white patches" in
+       Dark Mode. Everything still reads from the same --card/--bg/
+       --border/--text variables, so Light Mode is 100% unaffected.
+       ══════════════════════════════════════════════════════════════════ */
+
+    /* ── App header / toolbar (top strip incl. "Deploy") ── */
+    header[data-testid="stHeader"] {{
+        background: var(--bg) !important;
+    }}
+    div[data-testid="stToolbar"], div[data-testid="stToolbarActions"] {{
+        background: transparent !important;
+    }}
+    header[data-testid="stHeader"] * {{ color: var(--text) !important; }}
+    header[data-testid="stHeader"] svg {{ fill: var(--text) !important; }}
+    div[data-testid="stDecoration"] {{
+        background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+    }}
+    div[data-testid="stAppViewContainer"], div[data-testid="stAppViewBlockContainer"] {{
+        background: var(--bg) !important;
+    }}
+
+    /* ── File uploader (dropzone + uploaded-file row) ── */
+    section[data-testid="stFileUploaderDropzone"],
+    div[data-testid="stFileUploaderDropzone"] {{
+        background: var(--upload-bg) !important;
+        border: 1px dashed var(--border) !important;
+        border-radius: var(--radius-md) !important;
+    }}
+    section[data-testid="stFileUploaderDropzone"] *,
+    div[data-testid="stFileUploaderDropzone"] * {{
+        color: var(--text) !important;
+    }}
+    section[data-testid="stFileUploaderDropzone"] button,
+    div[data-testid="stFileUploaderDropzone"] button {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+    div[data-testid="stFileUploaderFile"],
+    li[data-testid="stFileUploaderFile"] {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+        border-radius: var(--radius-sm) !important;
+    }}
+    div[data-testid="stFileUploaderFile"] *,
+    li[data-testid="stFileUploaderFile"] * {{
+        color: var(--text) !important;
+    }}
+
+    /* ── Dropdown / select / multiselect menus (rendered in a portal,
+         so they sit outside .main and need their own rule) ── */
+    div[data-baseweb="popover"] div[data-baseweb="menu"],
+    ul[data-baseweb="menu"] {{
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow-md) !important;
+    }}
+    div[data-baseweb="popover"] li,
+    ul[data-baseweb="menu"] li,
+    li[role="option"] {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+    }}
+    li[role="option"]:hover,
+    li[aria-selected="true"] {{
+        background: var(--primary-soft) !important;
+        color: var(--text) !important;
+    }}
+    /* Multiselect / tag pills */
+    span[data-baseweb="tag"] {{
+        background: var(--primary-soft) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+    span[data-baseweb="tag"] * {{ color: var(--text) !important; }}
+
+    /* ── Checkbox / Radio ── */
+    div[data-testid="stCheckbox"] label,
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] div {{
+        color: var(--text) !important;
+    }}
+    label[data-baseweb="checkbox"] > span:first-child,
+    label[data-baseweb="radio"] > span:first-child {{
+        background: var(--input-bg) !important;
+        border-color: var(--border) !important;
+    }}
+
+    /* ── Toggle switch label text ── */
+    div[data-testid="stToggle"] label p {{ color: var(--text) !important; }}
+
+    /* ── Tables / DataFrames ── */
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"],
+    table {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }}
+    div[data-testid="stDataFrame"] * {{ color: var(--text) !important; }}
+    thead tr th, tbody tr td {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }}
+    div[data-testid="stDataFrame"] [role="columnheader"],
+    div[data-testid="stDataFrame"] [role="gridcell"] {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+    }}
+
+    /* ── Tooltips (help icons, disabled-field hints, etc.) ── */
+    div[data-baseweb="tooltip"] {{
+        background: var(--card-alt) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+
+    /* ── Modal / dialog (e.g. camera input, confirmation dialogs) ── */
+    div[data-testid="stModal"] > div, div[role="dialog"] {{
+        background: var(--card) !important;
+        color: var(--text) !important;
+    }}
+
+    /* ── Captions & small helper text ── */
+    div[data-testid="stCaptionContainer"], small {{
+        color: var(--subtext) !important;
+    }}
 
     /* Hide Streamlit branding */
     #MainMenu, footer {{ visibility: hidden; }}
@@ -434,8 +758,8 @@ def render_sidebar():
         st.markdown(f"""
         <div style="text-align:center; padding: 1rem 0 0.5rem;">
             <div style="font-size:2.5rem;">{user['avatar']}</div>
-            <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1rem; margin-top:0.3rem;">{user['name']}</div>
-            <div style="font-size:0.78rem; color:#94A3B8;">{user['role']} · {user['email']}</div>
+            <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1rem; margin-top:0.3rem; color:var(--heading);">{user['name']}</div>
+            <div style="font-size:0.78rem; color:var(--subtext);">{user['role']} · {user['email']}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -652,7 +976,7 @@ def page_upload():
         col1, col2 = st.columns(2)
         with col1:
             score = result["match_score"]
-            color = "#22C55E" if score >= 80 else "#F59E0B" if score >= 60 else "#EF4444"
+            color = "var(--success)" if score >= 80 else "var(--warning)" if score >= 60 else "var(--error)"
             st.markdown(f"""
             <div class="av-panel">
                 <h4>Match Score</h4>
@@ -684,7 +1008,7 @@ def page_reports():
         return
 
     for r in st.session_state.reports:
-        score_color = "#22C55E" if r["score"] >= 80 else "#F59E0B" if r["score"] >= 60 else "#EF4444"
+        score_color = "var(--success)" if r["score"] >= 80 else "var(--warning)" if r["score"] >= 60 else "var(--error)"
         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
         with col1:
             st.markdown(f"""
@@ -757,13 +1081,19 @@ def page_analytics():
         import plotly.graph_objects as go
         import pandas as pd
 
+        dark = st.session_state.dark_mode
+        c_success = "#34D399" if dark else "#16A34A"
+        c_warning = "#FBBF24" if dark else "#D97706"
+        c_error   = "#F87171" if dark else "#DC2626"
+        font_color = "#E7EBF3" if dark else "#1E2430"
+
         scores = [r["score"] for r in reports]
         names  = [r["name"][:20] for r in reports]
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
             x=names, y=scores,
-            marker_color=["#22C55E" if s >= 80 else "#F59E0B" if s >= 60 else "#EF4444" for s in scores],
+            marker_color=[c_success if s >= 80 else c_warning if s >= 60 else c_error for s in scores],
             text=scores, textposition="outside",
         ))
         fig.update_layout(
@@ -773,7 +1103,7 @@ def page_analytics():
             yaxis_range=[0, 110],
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter"),
+            font=dict(family="Inter", color=font_color),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -796,7 +1126,7 @@ def page_history():
         return
 
     for r in st.session_state.reports:
-        badge_color = "#22C55E" if r["score"] >= 80 else "#F59E0B"
+        badge_color = "var(--success)" if r["score"] >= 80 else "var(--warning)"
         st.markdown(f"""
         <div class="av-panel" style="margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
             <span><b>{r['name']}</b> &nbsp;<span style="font-size:0.78rem;color:var(--subtext);">📅 {r['date']}</span></span>
