@@ -1,124 +1,66 @@
-import json
-from google import genai
-from google.genai import types
-from app.core.config import settings
+from concurrent.futures import ThreadPoolExecutor
 
-
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
+from app.services.resume_agent import run_resume_agent
+from app.services.jd_agent import run_jd_agent
+from app.services.validation_agent import run_validation_agent
 
 
 def run_mavs_pipeline(resume_content: str, jd_content: str) -> dict:
     """
-    Executes MAVS pipeline and returns frontend-compatible JSON.
+    MAVS Orchestrator
+
+    Resume Agent
+           │
+           ├──────────────┐
+           │              │
+           ▼              ▼
+      Resume Agent    JD Agent
+           │              │
+           └──────┬───────┘
+                  ▼
+        Validation Agent
+                  ▼
+         Final Recruiter Report
     """
 
-    prompt = f"""
-You are MAVS (Multi-Agent Validation Suite).
+    # Run Resume Agent and JD Agent in parallel
+    with ThreadPoolExecutor(max_workers=2) as executor:
 
-You have two inputs:
-
-======================
-RESUME
-======================
-{resume_content}
-
-======================
-JOB DESCRIPTION
-======================
-{jd_content}
-
-Perform the following tasks.
-
-1. Analyze the resume.
-Extract:
-- Candidate name
-- Skills
-- Experience
-- Education
-
-2. Analyze the Job Description.
-Extract:
-- Role
-- Required Skills
-- Required Experience
-
-3. Compare resume with JD.
-
-Generate:
-
-- Match Score (0-100)
-- Risk Score (Low / Medium / High)
-- Status (Verified / Review Required / Rejected)
-- Recommendation
-- Candidate Match (Example: "87%")
-
-4. Generate EXACTLY 3 deep technical interview questions.
-
-Return ONLY VALID JSON.
-
-Expected JSON format:
-
-{{
-  "resume_analysis": {{
-      "name": "",
-      "skills": [],
-      "experience": "",
-      "education": ""
-  }},
-  "jd_analysis": {{
-      "role": "",
-      "required_skills": [],
-      "experience": ""
-  }},
-  "match_score": 0,
-  "risk_score": "",
-  "status": "",
-  "recommendation": "",
-  "candidate_match": "",
-  "interview_questions": [
-      "",
-      "",
-      ""
-  ]
-}}
-
-Return ONLY JSON.
-No markdown.
-No explanation.
-"""
-
-    try:
-
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            ),
+        resume_future = executor.submit(
+            run_resume_agent,
+            resume_content
         )
 
-        result = json.loads(response.text)
+        jd_future = executor.submit(
+            run_jd_agent,
+            jd_content
+        )
 
-        return result
+        resume_analysis = resume_future.result()
+        jd_analysis = jd_future.result()
 
-    except Exception as e:
+    # Keep only relevant fields for validation
+    resume_summary = {
+        "candidate_name": resume_analysis.get("candidate_name", ""),
+        "skills": resume_analysis.get("skills", []),
+        "experience": resume_analysis.get("experience", ""),
+        "education": resume_analysis.get("education", "")
+    }
 
-        return {
-            "resume_analysis": {
-                "name": "Unknown",
-                "skills": [],
-                "experience": "",
-                "education": ""
-            },
-            "jd_analysis": {
-                "role": "",
-                "required_skills": [],
-                "experience": ""
-            },
-            "match_score": 0,
-            "risk_score": "High",
-            "status": "Pipeline Failed",
-            "recommendation": str(e),
-            "candidate_match": "0%",
-            "interview_questions": []
-        }
+    jd_summary = {
+        "role": jd_analysis.get("role", ""),
+        "required_skills": jd_analysis.get("required_skills", []),
+        "experience": jd_analysis.get("experience", ""),
+        "education": jd_analysis.get("education", "")
+    }
+
+    validation_report = run_validation_agent(
+        resume_summary,
+        jd_summary
+    )
+
+    return {
+        "resume_analysis": resume_analysis,
+        "jd_analysis": jd_analysis,
+        **validation_report
+    }
