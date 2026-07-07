@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from sqlalchemy.orm import Session
 import json
+import traceback
 
 from database import get_db
 import models
@@ -79,7 +80,11 @@ async def process_validation(
 
         db.rollback()
 
+        print("\n" + "=" * 80)
+        traceback.print_exc()
+        print("=" * 80 + "\n")
+
         raise HTTPException(
             status_code=500,
             detail=str(e)
-        )
+    )
