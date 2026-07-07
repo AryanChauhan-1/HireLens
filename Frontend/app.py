@@ -1,3 +1,5 @@
+from urllib import response
+
 import streamlit as st
 import time
 import json
@@ -220,7 +222,7 @@ def inject_css():
     .av-topbar {{
         background: linear-gradient(135deg, var(--primary), var(--secondary));
         color: #fff !important;
-        padding: 1.8rem 1.5rem;
+        padding: 2.2rem 1.2rem;
         border-radius: var(--radius-lg);
         display: flex;
         align-items: center;
@@ -622,41 +624,156 @@ def unread_count():
     return sum(1 for n in st.session_state.notifications if not n["read"])
 
 def call_api(endpoint, files=None, data=None):
-    """Call backend API with graceful fallback to mock data."""
+    """
+    Calls the HireLens backend.
+
+    Falls back to demo data if backend is unavailable.
+    """
+
     try:
         url = f"{API_BASE_URL}{endpoint}"
-        resp = requests.post(url, files=files, data=data, timeout=15)
-        if resp.status_code == 200:
-            return resp.json()
-    except Exception:
-        pass
-    # ── Mock fallback ──
-    return {
-        "resume_analysis": {
-            "name": "ABC",
-            "skills": ["Python", "SQL", "FastAPI", "Docker"],
-            "experience": "2 years",
-            "education": "B.Tech Computer Science",
-        },
-        "jd_analysis": {
-            "required_skills": ["Python", "SQL", "Docker", "REST API"],
-            "experience": "2+ years",
-            "role": "Backend Engineer",
-        },
-        "match_score": 92,
-        "risk_score": "Low",
-        "status": "Verified",
-        "recommendation": "Proceed to Technical Interview",
-        "candidate_match": "92%",
-        "interview_questions": [
-            "Explain FastAPI and its advantages over Flask.",
-            "What is SQLAlchemy and how does it work?",
-            "Difference between SQL and NoSQL databases?",
-            "How does Docker containerization work?",
-            "Explain REST API design principles.",
-        ],
-    }
 
+        response = requests.post(
+            url,
+            files=files,
+            data=data,
+            timeout=60
+        )
+
+        print("STATUS:", response.status_code)
+        print("BODY:", response.text)
+
+        response.raise_for_status()
+
+        return response.json()
+
+    except Exception as e:
+
+        print(f"Backend Error : {e}")
+
+        return {
+
+            "resume_analysis": {
+                "candidate_name": "Demo Candidate",
+                "skills": [
+                    "Python",
+                    "FastAPI",
+                    "SQL",
+                    "Docker"
+                ],
+                "experience": "2 Years",
+                "education": "B.Tech Computer Science",
+                "projects": [
+                    "HireLens",
+                    "CLI Chat Application"
+                ],
+                "programming_languages": [
+                    "Python",
+                    "C++"
+                ],
+                "frameworks": [
+                    "FastAPI",
+                    "Streamlit"
+                ],
+                "databases": [
+                    "SQLite"
+                ],
+                "cloud_technologies": [
+                    "Google Colab"
+                ]
+            },
+
+            "jd_analysis": {
+                "role": "Backend Developer",
+                "required_skills": [
+                    "Python",
+                    "FastAPI",
+                    "SQL",
+                    "Docker"
+                ],
+                "preferred_skills": [
+                    "Redis"
+                ],
+                "experience": "2 Years",
+                "education": "B.Tech",
+                "responsibilities": [
+                    "Develop APIs",
+                    "Optimize Backend"
+                ],
+                "tools_and_technologies": [
+                    "Python",
+                    "FastAPI",
+                    "Docker"
+                ]
+            },
+
+            "match_breakdown": {
+                "skills_match": 88,
+                "experience_match": 82,
+                "education_match": 94
+            },
+
+            "overall_match": 88,
+
+            "candidate_match": "88%",
+
+            "strengths": [
+                "Strong Python",
+                "FastAPI",
+                "Problem Solving"
+            ],
+
+            "weaknesses": [
+                "Redis",
+                "AWS"
+            ],
+
+            "missing_skills": [
+                "Redis",
+                "AWS"
+            ],
+
+            "risk_score": "Low",
+
+            "status": "Strong Match",
+
+            "reasoning": {
+                "summary":
+                    "Candidate demonstrates strong backend development fundamentals with relevant projects.",
+
+                "recommendation":
+                    "Proceed to Technical Interview."
+            },
+
+            "interview_questions": [
+
+                {
+                    "difficulty": "Easy",
+                    "targeted_skill": "Python",
+                    "question": "Explain list comprehensions.",
+                    "why_this_question":
+                        "Tests Python fundamentals."
+                },
+
+                {
+                    "difficulty": "Medium",
+                    "targeted_skill": "FastAPI",
+                    "question": "Explain dependency injection in FastAPI.",
+                    "why_this_question":
+                        "Validates backend framework knowledge."
+                },
+
+                {
+                    "difficulty": "Hard",
+                    "targeted_skill": "System Design",
+                    "question": "Design a scalable notification service.",
+                    "why_this_question":
+                        "Evaluates architecture thinking."
+                }
+
+            ]
+        }
+    
 # ─── AUTH PAGES ─────────────────────────────────────────────────────────────────
 def page_login():
     inject_css()
@@ -814,97 +931,222 @@ def render_topbar():
 # ─── DASHBOARD PAGE ──────────────────────────────────────────────────────────────
 def page_dashboard():
     render_topbar()
+
     result = st.session_state.analysis_result
 
-    files_up   = st.session_state.files_uploaded
-    match_sc   = result["match_score"] if result else "—"
-    risk_sc    = result["risk_score"]  if result else "—"
-    status     = result["status"]      if result else "Pending"
+    if not result:
+        st.info("📤 No analysis available yet. Please upload a Resume and Job Description first.")
+        return
 
-    # ── Metric Cards ──
+    resume = result.get("resume_analysis", {})
+    jd = result.get("jd_analysis", {})
+    breakdown = result.get("match_breakdown", {})
+    reasoning = result.get("reasoning", {})
+
+    overall = result.get("overall_match", 0)
+
+    skills_match = breakdown.get("skills_match", 0)
+    experience_match = breakdown.get("experience_match", 0)
+    education_match = breakdown.get("education_match", 0)
+
+    risk = result.get("risk_score", "-")
+    status = result.get("status", "-")
+
+    strengths = result.get("strengths", [])
+    weaknesses = result.get("weaknesses", [])
+    missing = result.get("missing_skills", [])
+
+    questions = result.get("interview_questions", [])
+
+    # ============================================================
+    # Top Metrics
+    # ============================================================
+
     st.markdown(f"""
     <div class="av-metric-row">
+
         <div class="av-metric">
-            <div class="label">Files Uploaded</div>
-            <div class="value">{files_up}</div>
-            <span class="badge badge-info">Total</span>
+            <div class="label">Overall Match</div>
+            <div class="value">{overall}%</div>
+            <span class="badge badge-success">AI Score</span>
         </div>
+
         <div class="av-metric">
-            <div class="label">Match Score</div>
-            <div class="value">{match_sc}{'%' if isinstance(match_sc, int) else ''}</div>
-            <span class="badge badge-success">AI Scored</span>
+            <div class="label">Skills Match</div>
+            <div class="value">{skills_match}%</div>
+            <span class="badge badge-info">Skills</span>
         </div>
+
         <div class="av-metric">
-            <div class="label">Risk Score</div>
-            <div class="value">{risk_sc}</div>
-            <span class="badge {'badge-success' if risk_sc=='Low' else 'badge-error'}">{'✅' if risk_sc=='Low' else '⚠️'} {risk_sc}</span>
+            <div class="label">Experience</div>
+            <div class="value">{experience_match}%</div>
+            <span class="badge badge-info">Experience</span>
         </div>
+
         <div class="av-metric">
-            <div class="label">Status</div>
-            <div class="value" style="font-size:1.2rem;">{status}</div>
-            <span class="badge badge-success">{'✔' if status=='Verified' else '⏳'}</span>
+            <div class="label">Education</div>
+            <div class="value">{education_match}%</div>
+            <span class="badge badge-info">Education</span>
         </div>
+
     </div>
     """, unsafe_allow_html=True)
 
-    if not result:
-        st.info("📤 No analysis yet. Go to **Upload & Validate** to begin.")
-        return
+    st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
 
-    ra  = result["resume_analysis"]
-    jd  = result["jd_analysis"]
-    rec = result
-    iqs = result.get("interview_questions", [])
+    # ============================================================
+    # Resume + JD
+    # ============================================================
 
-    # ── Analysis Grid ──
     col1, col2 = st.columns(2)
+
     with col1:
-        skills_str = ", ".join(ra.get("skills", []))
+
         st.markdown(f"""
         <div class="av-panel">
-            <h4>📄 Resume Analysis</h4>
-            <p><b>Name:</b> {ra.get('name','—')}</p>
-            <p><b>Skills:</b> {skills_str}</p>
-            <p><b>Experience:</b> {ra.get('experience','—')}</p>
-            <p><b>Education:</b> {ra.get('education','—')}</p>
+
+        <h4>📄 Candidate Profile</h4>
+
+        <p><b>Name</b><br>{resume.get("candidate_name","-")}</p>
+
+        <p><b>Experience</b><br>{resume.get("experience","-")}</p>
+
+        <p><b>Education</b><br>{resume.get("education","-")}</p>
+
+        <p><b>Programming Languages</b><br>
+        {", ".join(resume.get("programming_languages", []))}
+        </p>
+
+        <p><b>Frameworks</b><br>
+        {", ".join(resume.get("frameworks", []))}
+        </p>
+
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        req_skills = ", ".join(jd.get("required_skills", []))
+
         st.markdown(f"""
         <div class="av-panel">
-            <h4>📋 JD Analysis</h4>
-            <p><b>Role:</b> {jd.get('role','—')}</p>
-            <p><b>Required Skills:</b> {req_skills}</p>
-            <p><b>Experience:</b> {jd.get('experience','—')}</p>
+
+        <h4>💼 Job Analysis</h4>
+
+        <p><b>Role</b><br>{jd.get("role","-")}</p>
+
+        <p><b>Required Skills</b><br>
+        {", ".join(jd.get("required_skills", []))}
+        </p>
+
+        <p><b>Experience</b><br>{jd.get("experience","-")}</p>
+
+        <p><b>Education</b><br>{jd.get("education","-")}</p>
+
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+    # ============================================================
+    # AI Insights
+    # ============================================================
+
     col3, col4 = st.columns(2)
 
     with col3:
-        st.markdown(f"""
+
+        st.markdown("""
         <div class="av-panel">
-            <h4>🤖 AI Recommendation</h4>
-            <p><b>Candidate Match:</b> {rec.get('candidate_match','—')}</p>
-            <p><b>Recommendation:</b> {rec.get('recommendation','—')}</p>
-        </div>
+        <h4>🧠 AI Hiring Recommendation</h4>
         """, unsafe_allow_html=True)
+
+        st.metric("Candidate Match", result.get("candidate_match", "-"))
+
+        st.info(f"Risk Level : {risk}")
+
+        st.success(f"Status : {status}")
+
+        st.markdown("#### Summary")
+
+        st.write(reasoning.get("summary", "-"))
+
+        st.markdown("#### Recommendation")
+
+        st.write(reasoning.get("recommendation", "-"))
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col4:
-        iq_html = "".join([f"<li>{q}</li>" for q in iqs[:5]])
-        st.markdown(f"""
+
+        st.markdown("""
         <div class="av-panel">
-            <h4>❓ Interview Questions</h4>
-            <div class="av-code-box"><ol style="margin:0;padding-left:1.2rem">{iq_html}</ol></div>
-        </div>
+        <h4>🎯 Skill Intelligence</h4>
         """, unsafe_allow_html=True)
 
+        st.markdown("##### ✅ Strengths")
+
+        if strengths:
+            for s in strengths:
+                st.success(s)
+        else:
+            st.caption("No strengths identified.")
+
+        st.markdown("##### ⚠️ Weaknesses")
+
+        if weaknesses:
+            for w in weaknesses:
+                st.warning(w)
+        else:
+            st.caption("No weaknesses identified.")
+
+        st.markdown("##### ❌ Missing Skills")
+
+        if missing:
+            for m in missing:
+                st.error(m)
+        else:
+            st.success("No critical missing skills.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    if st.button("📥 Download Report", type="primary"):
+
+    # ============================================================
+    # Interview Questions
+    # ============================================================
+
+    st.markdown("""
+    <div class="av-panel">
+    <h4>🎤 AI Generated Interview Questions</h4>
+    """, unsafe_allow_html=True)
+
+    if questions:
+
+        for q in questions:
+
+            with st.expander(
+                f"{q.get('difficulty','Question')} • {q.get('targeted_skill','')}",
+                expanded=True
+            ):
+
+                st.markdown(f"**Question**")
+
+                st.write(q.get("question",""))
+
+                st.markdown("**Why this question?**")
+
+                st.caption(q.get("why_this_question",""))
+
+    else:
+
+        st.info("No interview questions generated.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+    if st.button("📥 Download Recruiter Report", type="primary"):
         _download_report(result)
+
 
 # ─── UPLOAD & VALIDATE PAGE ──────────────────────────────────────────────────────
 def page_upload():
@@ -915,206 +1157,749 @@ def page_upload():
 
     with col1:
         st.markdown("### Resume Upload")
-        st.markdown('<div class="av-upload-zone">📎 Drag & drop your resume here</div>', unsafe_allow_html=True)
-        uploaded = st.file_uploader("Upload Resume (PDF/DOCX)", type=["pdf", "docx", "txt"], label_visibility="collapsed")
+        st.markdown(
+            '<div class="av-upload-zone">📎 Drag & drop your resume here</div>',
+            unsafe_allow_html=True,
+        )
+
+        uploaded = st.file_uploader(
+            "Upload Resume (PDF/DOCX)",
+            type=["pdf", "docx", "txt"],
+            label_visibility="collapsed",
+        )
 
     with col2:
         st.markdown("### Job Description")
-        jd_text = st.text_area("Paste Job Description here", height=180, placeholder="Senior Python Developer\nRequired Skills: Python, FastAPI, Docker, SQL...\nExperience: 2+ years")
+
+        jd_text = st.text_area(
+            "Paste Job Description here",
+            height=180,
+            placeholder="""Senior Python Developer
+
+Required Skills:
+Python
+FastAPI
+Docker
+SQL
+
+Experience:
+2+ Years""",
+        )
 
     st.markdown("---")
+
     col_a, col_b, col_c = st.columns([1, 1, 2])
+
     with col_a:
-        run_btn = st.button("🚀 Run AI Validation", type="primary", use_container_width=True)
+        run_btn = st.button(
+            "🚀 Run AI Validation",
+            type="primary",
+            use_container_width=True,
+        )
+
     with col_b:
         if st.button("🔄 Clear", use_container_width=True):
             st.session_state.analysis_result = None
             st.rerun()
 
     if run_btn:
+
         if not uploaded and not jd_text.strip():
-            st.warning("Please upload a resume or paste a Job Description.")
+            st.warning("Please upload a Resume or paste a Job Description.")
+            return
+
+        with st.spinner("🤖 MAVS Agents are validating the candidate..."):
+
+            files = {}
+            data = {}
+
+            if uploaded:
+                files["resume"] = (
+                    uploaded.name,
+                    uploaded.getvalue(),
+                    uploaded.type,
+                )
+                data["filename"] = uploaded.name
+
+            if jd_text.strip():
+                data["jd"] = jd_text
+
+            result = call_api(
+                "/api/validate",
+                files=files if files else None,
+                data=data,
+            )
+
+        st.session_state.analysis_result = result
+        st.session_state.files_uploaded += 1
+
+        report = {
+            "id": len(st.session_state.reports) + 1,
+            "name": uploaded.name if uploaded else "JD Analysis",
+            "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "score": result.get("overall_match", 0),
+            "status": result.get("status", "Unknown"),
+            "data": result,
+        }
+
+        st.session_state.reports.insert(0, report)
+
+        add_notification(
+            f"✅ Validation completed for {report['name']}",
+            "🤖",
+        )
+
+        add_notification(
+            "📄 Recruiter report generated.",
+            "📄",
+        )
+
+        st.success("Validation completed successfully!")
+
+        st.rerun()
+
+    if not st.session_state.analysis_result:
+        return
+
+    st.markdown("---")
+    st.markdown("## 📊 Latest Analysis")
+
+    result = st.session_state.analysis_result
+
+    resume = result.get("resume_analysis", {})
+    jd = result.get("jd_analysis", {})
+    breakdown = result.get("match_breakdown", {})
+    reasoning = result.get("reasoning", {})
+
+    overall = result.get("overall_match", 0)
+
+    skills = breakdown.get("skills_match", 0)
+    experience = breakdown.get("experience_match", 0)
+    education = breakdown.get("education_match", 0)
+
+    risk = result.get("risk_score", "-")
+    status = result.get("status", "-")
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    c1.metric("Overall", f"{overall}%")
+    c2.metric("Skills", f"{skills}%")
+    c3.metric("Experience", f"{experience}%")
+    c4.metric("Education", f"{education}%")
+
+    st.markdown("")
+
+    left, right = st.columns([1.2, 1])
+
+    with left:
+
+        st.markdown("### 👤 Candidate")
+
+        st.markdown(
+            f"""
+**Name**
+
+{resume.get("candidate_name","Unknown")}
+
+**Education**
+
+{resume.get("education","-")}
+
+**Experience**
+
+{resume.get("experience","-")}
+"""
+        )
+
+        st.markdown("### 💼 Target Role")
+
+        st.info(jd.get("role", "-"))
+
+        st.markdown("### 🟢 Strengths")
+
+        strengths = result.get("strengths", [])
+
+        if strengths:
+            for item in strengths:
+                st.success(item)
         else:
-            with st.spinner("🔬 AI agents are analyzing... Please wait."):
-                time.sleep(2.5)   # simulate latency
-                files = {}
-                data  = {}
-                if uploaded:
-                    files["resume"] = (uploaded.name, uploaded.getvalue(), uploaded.type)
-                    data["filename"] = uploaded.name
-                if jd_text.strip():
-                    data["jd"] = jd_text
+            st.caption("No strengths identified.")
 
-                result = call_api("/api/validate", files=files if files else None, data=data)
+        st.markdown("### 🔴 Missing Skills")
 
-            st.session_state.analysis_result = result
-            st.session_state.files_uploaded += 1
+        missing = result.get("missing_skills", [])
 
-            # Save to reports
-            report = {
-                "id": len(st.session_state.reports) + 1,
-                "name": uploaded.name if uploaded else "JD-Only Analysis",
-                "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "score": result["match_score"],
-                "status": result["status"],
-                "data": result,
-            }
-            st.session_state.reports.insert(0, report)
-            add_notification(f"✅ Validation complete for {report['name']}!", "🔬")
-            add_notification("📄 New report generated.", "📄")
+        if missing:
+            for item in missing:
+                st.error(item)
+        else:
+            st.success("No critical missing skills.")
 
-            st.success("✅ Validation complete! See results below.")
-            st.rerun()
+    with right:
 
-    if st.session_state.analysis_result:
-        st.markdown("---")
-        st.markdown("### 📊 Latest Analysis Results")
-        result = st.session_state.analysis_result
-        ra = result["resume_analysis"]
-        jd = result["jd_analysis"]
+        st.markdown("### ⚠️ Risk")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            score = result["match_score"]
-            color = "var(--success)" if score >= 80 else "var(--warning)" if score >= 60 else "var(--error)"
-            st.markdown(f"""
-            <div class="av-panel">
-                <h4>Match Score</h4>
-                <div style="font-size:3rem; font-weight:700; color:{color}; text-align:center;">{score}%</div>
-                <p style="text-align:center; color:var(--subtext);">Risk: {result['risk_score']} · Status: {result['status']}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        with col2:
-            iqs = result.get("interview_questions", [])
-            iq_html = "".join([f"<div class='av-code-box' style='margin-bottom:0.4rem'>Q{i+1}: {q}</div>" for i, q in enumerate(iqs[:3])])
-            st.markdown(f"""
-            <div class="av-panel">
-                <h4>Top Interview Questions</h4>
-                {iq_html}
-            </div>
-            """, unsafe_allow_html=True)
+        st.info(risk)
 
-        if st.button("→ View Full Dashboard", type="primary"):
-            st.session_state.active_page = "Dashboard"
-            st.rerun()
+        st.markdown("### 📌 Hiring Status")
+
+        st.success(status)
+
+        st.markdown("### 🧠 AI Recommendation")
+
+        st.markdown(reasoning.get("summary", ""))
+
+        st.markdown("")
+
+        st.info(reasoning.get("recommendation", ""))
+
+    st.markdown("---")
+
+    st.markdown("## 💬 Interview Questions")
+
+    questions = result.get("interview_questions", [])
+
+    if questions:
+
+        for q in questions:
+
+            with st.expander(
+                f"{q.get('difficulty','Question')} • {q.get('targeted_skill','')}",
+                expanded=True,
+            ):
+
+                st.markdown(
+                    f"**Question**\n\n{q.get('question','')}"
+                )
+
+                st.caption(
+                    q.get("why_this_question", "")
+                )
+
+    else:
+
+        st.warning("No interview questions generated.")
+
+    st.markdown("---")
+
+    if st.button(
+        "📊 Open Recruiter Dashboard",
+        type="primary",
+        use_container_width=True,
+    ):
+        st.session_state.active_page = "Dashboard"
+        st.rerun()
+
 
 # ─── REPORTS PAGE ────────────────────────────────────────────────────────────────
 def page_reports():
     render_topbar()
-    st.markdown("## 📄 Reports")
+    st.markdown("## 📄 Recruiter Reports")
 
     if not st.session_state.reports:
-        st.info("No reports yet. Run a validation to generate reports.")
+        st.info("No reports available yet. Complete a validation first.")
         return
 
-    for r in st.session_state.reports:
-        score_color = "var(--success)" if r["score"] >= 80 else "var(--warning)" if r["score"] >= 60 else "var(--error)"
-        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-        with col1:
-            st.markdown(f"""
-            <div class="av-panel" style="padding:0.7rem 1rem;">
-                <b>{r['name']}</b><br>
-                <span style="font-size:0.78rem; color:var(--subtext);">📅 {r['date']}</span>
+    for report in st.session_state.reports:
+
+        result = report["data"]
+
+        score = result.get("overall_match", 0)
+        risk = result.get("risk_score", "-")
+        status = result.get("status", "-")
+
+        candidate = result.get("resume_analysis", {}).get(
+            "candidate_name",
+            "Unknown Candidate"
+        )
+
+        role = result.get("jd_analysis", {}).get(
+            "role",
+            "-"
+        )
+
+        score_color = (
+            "var(--success)"
+            if score >= 80
+            else "var(--warning)"
+            if score >= 60
+            else "var(--error)"
+        )
+
+        st.markdown(
+            f"""
+            <div class="av-panel">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+
+                <div>
+
+                    <h4 style="margin-bottom:0.2rem;">
+                        {candidate}
+                    </h4>
+
+                    <div style="color:var(--subtext);">
+
+                        📅 {report['date']}
+
+                        <br>
+
+                        💼 {role}
+
+                    </div>
+
+                </div>
+
+                <div style="text-align:right;">
+
+                    <div style="
+                        font-size:2rem;
+                        font-weight:700;
+                        color:{score_color};
+                    ">
+                        {score}%
+                    </div>
+
+                    <div>{status}</div>
+
+                    <small>
+                        Risk : {risk}
+                    </small>
+
+                </div>
+
             </div>
-            """, unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"<div style='text-align:center; font-size:1.3rem; font-weight:700; color:{score_color}; padding-top:0.5rem;'>{r['score']}%</div>", unsafe_allow_html=True)
-        with col3:
-            if st.button("👁 View", key=f"view_{r['id']}", use_container_width=True):
-                st.session_state.analysis_result = r["data"]
+
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+
+            if st.button(
+                "👁 Open Dashboard",
+                key=f"view_{report['id']}",
+                use_container_width=True,
+            ):
+
+                st.session_state.analysis_result = result
                 st.session_state.active_page = "Dashboard"
                 st.rerun()
-        with col4:
-            if st.button("⬇ PDF", key=f"dl_{r['id']}", use_container_width=True):
-                _download_report(r["data"])
-        st.markdown("")
+
+        with c2:
+
+            if st.button(
+                "⬇ Download Report",
+                key=f"download_{report['id']}",
+                use_container_width=True,
+            ):
+
+                _download_report(result)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
 
 def _download_report(result):
-    """Generate and offer a downloadable text report."""
-    ra  = result["resume_analysis"]
-    jd  = result["jd_analysis"]
-    iqs = result.get("interview_questions", [])
+
+    resume = result.get("resume_analysis", {})
+    jd = result.get("jd_analysis", {})
+    reasoning = result.get("reasoning", {})
+    breakdown = result.get("match_breakdown", {})
+
+    questions = result.get(
+        "interview_questions",
+        []
+    )
+
     content = f"""
-HireLens — Validation Report
-Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
-{'='*50}
+============================================================
+HireLens Recruiter Report
+Generated :
+{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
+============================================================
 
-CANDIDATE
-Name:        {ra.get('name','—')}
-Skills:      {', '.join(ra.get('skills',[]))}
-Experience:  {ra.get('experience','—')}
-Education:   {ra.get('education','—')}
+=========================
+CANDIDATE PROFILE
+=========================
 
+Name :
+{resume.get('candidate_name','-')}
+
+Experience :
+{resume.get('experience','-')}
+
+Education :
+{resume.get('education','-')}
+
+Skills :
+{', '.join(resume.get('skills',[]))}
+
+Projects :
+{', '.join(resume.get('projects',[]))}
+
+
+=========================
 JOB DESCRIPTION
-Role:             {jd.get('role','—')}
-Required Skills:  {', '.join(jd.get('required_skills',[]))}
-Experience:       {jd.get('experience','—')}
+=========================
 
-VALIDATION RESULTS
-Match Score:     {result['match_score']}%
-Risk Score:      {result['risk_score']}
-Status:          {result['status']}
-Recommendation:  {result.get('recommendation','—')}
+Role :
+{jd.get('role','-')}
 
+Required Skills :
+{', '.join(jd.get('required_skills',[]))}
+
+Experience :
+{jd.get('experience','-')}
+
+
+=========================
+MATCH ANALYSIS
+=========================
+
+Overall Match :
+{result.get('overall_match',0)}%
+
+Skills Match :
+{breakdown.get('skills_match',0)}%
+
+Experience Match :
+{breakdown.get('experience_match',0)}%
+
+Education Match :
+{breakdown.get('education_match',0)}%
+
+Risk :
+{result.get('risk_score','-')}
+
+Status :
+{result.get('status','-')}
+
+
+=========================
+STRENGTHS
+=========================
+
+{chr(10).join("- " + s for s in result.get("strengths", []))}
+
+
+=========================
+WEAKNESSES
+=========================
+
+{chr(10).join("- " + s for s in result.get("weaknesses", []))}
+
+
+=========================
+MISSING SKILLS
+=========================
+
+{chr(10).join("- " + s for s in result.get("missing_skills", []))}
+
+
+=========================
+AI SUMMARY
+=========================
+
+{reasoning.get("summary","")}
+
+
+Recommendation
+
+{reasoning.get("recommendation","")}
+
+
+=========================
 INTERVIEW QUESTIONS
-""" + "\n".join([f"{i+1}. {q}" for i, q in enumerate(iqs)])
+=========================
+
+"""
+
+    for i, q in enumerate(questions, start=1):
+
+        content += f"""
+
+------------------------------------------------------------
+
+Question {i}
+
+Difficulty :
+{q.get('difficulty','')}
+
+Target Skill :
+{q.get('targeted_skill','')}
+
+Question :
+{q.get('question','')}
+
+Why asked?
+
+{q.get('why_this_question','')}
+
+"""
 
     st.download_button(
-        label="📥 Download .txt Report",
+        "📥 Download Recruiter Report",
         data=content,
-        file_name=f"hirelens_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+        file_name=f"HireLens_Report_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.txt",
         mime="text/plain",
     )
-    add_notification("📄 Report downloaded.", "📥")
+
+    add_notification(
+        "📄 Recruiter report downloaded.",
+        "📥",
+    )
+
 
 # ─── ANALYTICS PAGE ──────────────────────────────────────────────────────────────
 def page_analytics():
     render_topbar()
-    st.markdown("## 📊 Analytics")
+    st.markdown("## 📊 Hiring Analytics")
 
     reports = st.session_state.reports
+
     if not reports:
-        st.info("Run validations to see analytics.")
+        st.info("Complete a validation to generate analytics.")
         return
 
     try:
+
         import plotly.graph_objects as go
-        import pandas as pd
 
         dark = st.session_state.dark_mode
+
         c_success = "#34D399" if dark else "#16A34A"
         c_warning = "#FBBF24" if dark else "#D97706"
-        c_error   = "#F87171" if dark else "#DC2626"
+        c_error = "#F87171" if dark else "#DC2626"
+
         font_color = "#E7EBF3" if dark else "#1E2430"
 
-        scores = [r["score"] for r in reports]
-        names  = [r["name"][:20] for r in reports]
+        names = []
+        overall_scores = []
+        skill_scores = []
+        experience_scores = []
+        education_scores = []
+
+        risk_distribution = {
+            "Low": 0,
+            "Medium": 0,
+            "High": 0,
+        }
+
+        status_distribution = {}
+
+        missing_skill_frequency = {}
+
+        for report in reports:
+
+            data = report["data"]
+
+            resume = data.get("resume_analysis", {})
+            breakdown = data.get("match_breakdown", {})
+
+            names.append(
+                resume.get(
+                    "candidate_name",
+                    report["name"]
+                )[:18]
+            )
+
+            overall_scores.append(
+                data.get("overall_match", 0)
+            )
+
+            skill_scores.append(
+                breakdown.get("skills_match", 0)
+            )
+
+            experience_scores.append(
+                breakdown.get("experience_match", 0)
+            )
+
+            education_scores.append(
+                breakdown.get("education_match", 0)
+            )
+
+            risk = data.get("risk_score", "Medium")
+            risk_distribution[risk] = risk_distribution.get(risk, 0) + 1
+
+            status = data.get("status", "Unknown")
+            status_distribution[status] = status_distribution.get(status, 0) + 1
+
+            for skill in data.get("missing_skills", []):
+                missing_skill_frequency[skill] = (
+                    missing_skill_frequency.get(skill, 0) + 1
+                )
+
+        # ==========================================================
+        # Overall Match Chart
+        # ==========================================================
 
         fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=names, y=scores,
-            marker_color=[c_success if s >= 80 else c_warning if s >= 60 else c_error for s in scores],
-            text=scores, textposition="outside",
-        ))
+
+        fig.add_trace(
+            go.Bar(
+                x=names,
+                y=overall_scores,
+                marker_color=[
+                    c_success if s >= 80
+                    else c_warning if s >= 60
+                    else c_error
+                    for s in overall_scores
+                ],
+                text=overall_scores,
+                textposition="outside",
+            )
+        )
+
         fig.update_layout(
-            title="Match Scores per Validation",
-            xaxis_title="Candidate / Run",
-            yaxis_title="Score (%)",
+            title="Overall Candidate Match",
+            xaxis_title="Candidates",
+            yaxis_title="Overall Match (%)",
             yaxis_range=[0, 110],
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter", color=font_color),
+            font=dict(
+                family="Inter",
+                color=font_color,
+            ),
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
-        avg = sum(scores) / len(scores)
-        high = sum(1 for s in scores if s >= 80)
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Average Score", f"{avg:.1f}%")
-        col2.metric("High Match (≥80%)", high)
-        col3.metric("Total Validations", len(scores))
+        # ==========================================================
+        # Metrics
+        # ==========================================================
+
+        avg_match = (
+            sum(overall_scores) / len(overall_scores)
+            if overall_scores
+            else 0
+        )
+
+        avg_skill = (
+            sum(skill_scores) / len(skill_scores)
+            if skill_scores
+            else 0
+        )
+
+        avg_exp = (
+            sum(experience_scores) / len(experience_scores)
+            if experience_scores
+            else 0
+        )
+
+        avg_edu = (
+            sum(education_scores) / len(education_scores)
+            if education_scores
+            else 0
+        )
+
+        c1, c2, c3, c4 = st.columns(4)
+
+        c1.metric("Average Match", f"{avg_match:.1f}%")
+        c2.metric("Average Skills", f"{avg_skill:.1f}%")
+        c3.metric("Average Experience", f"{avg_exp:.1f}%")
+        c4.metric("Average Education", f"{avg_edu:.1f}%")
+
+        st.markdown("---")
+
+        left, right = st.columns(2)
+
+        # ==========================================================
+        # Risk Distribution
+        # ==========================================================
+
+        with left:
+
+            st.markdown("### ⚠️ Risk Distribution")
+
+            risk_fig = go.Figure()
+
+            risk_fig.add_trace(
+                go.Pie(
+                    labels=list(risk_distribution.keys()),
+                    values=list(risk_distribution.values()),
+                    hole=0.45,
+                )
+            )
+
+            risk_fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                font=dict(color=font_color),
+            )
+
+            st.plotly_chart(
+                risk_fig,
+                use_container_width=True,
+            )
+
+        # ==========================================================
+        # Hiring Status
+        # ==========================================================
+
+        with right:
+
+            st.markdown("### 📌 Candidate Status")
+
+            status_fig = go.Figure()
+
+            status_fig.add_trace(
+                go.Bar(
+                    x=list(status_distribution.keys()),
+                    y=list(status_distribution.values()),
+                    marker_color=c_success,
+                )
+            )
+
+            status_fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color=font_color),
+            )
+
+            st.plotly_chart(
+                status_fig,
+                use_container_width=True,
+            )
+
+        st.markdown("---")
+
+        # ==========================================================
+        # Top Missing Skills
+        # ==========================================================
+
+        st.markdown("### ❌ Top Missing Skills")
+
+        if missing_skill_frequency:
+
+            ordered = sorted(
+                missing_skill_frequency.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+
+            for skill, count in ordered[:10]:
+
+                st.progress(
+                    min(count / len(reports), 1.0),
+                    text=f"{skill} ({count})",
+                )
+
+        else:
+
+            st.success(
+                "No missing skills detected."
+            )
+
     except ImportError:
-        st.warning("Install plotly for charts: `pip install plotly`")
+
+        st.warning(
+            "Plotly is required.\n\nInstall using:\n\npip install plotly"
+        )
+
 
 # ─── HISTORY PAGE ────────────────────────────────────────────────────────────────
 def page_history():
