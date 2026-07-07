@@ -1,3 +1,4 @@
+from unittest import result
 from urllib import response
 
 import streamlit as st
@@ -34,6 +35,128 @@ DUMMY_USERS = {
         "theme": "Light",
         "avatar": "👤",
     },
+}
+
+DEMO_DATA = {
+    "resume_analysis": {
+                "candidate_name": "Demo Candidate",
+                "skills": [
+                    "Python",
+                    "FastAPI",
+                    "SQL",
+                    "Docker"
+                ],
+                "experience": "2 Years",
+                "education": "B.Tech Computer Science",
+                "projects": [
+                    "HireLens",
+                    "CLI Chat Application"
+                ],
+                "programming_languages": [
+                    "Python",
+                    "C++"
+                ],
+                "frameworks": [
+                    "FastAPI",
+                    "Streamlit"
+                ],
+                "databases": [
+                    "SQLite"
+                ],
+                "cloud_technologies": [
+                    "Google Colab"
+                ]
+            },
+
+            "jd_analysis": {
+                "role": "Backend Developer",
+                "required_skills": [
+                    "Python",
+                    "FastAPI",
+                    "SQL",
+                    "Docker"
+                ],
+                "preferred_skills": [
+                    "Redis"
+                ],
+                "experience": "2 Years",
+                "education": "B.Tech",
+                "responsibilities": [
+                    "Develop APIs",
+                    "Optimize Backend"
+                ],
+                "tools_and_technologies": [
+                    "Python",
+                    "FastAPI",
+                    "Docker"
+                ]
+            },
+
+            "match_breakdown": {
+                "skills_match": 87,
+                "experience_match": 72,
+                "education_match": 94
+            },
+
+            "overall_match": 86,
+
+            "candidate_match": "86%",
+
+            "strengths": [
+                "Strong Python",
+                "FastAPI",
+                "Problem Solving"
+            ],
+
+            "weaknesses": [
+                "Redis",
+                "AWS"
+            ],
+
+            "missing_skills": [
+                "Redis",
+                "AWS"
+            ],
+
+            "risk_score": "Low",
+
+            "status": "Strong Match",
+
+            "reasoning": {
+                "summary":
+                    "Candidate demonstrates strong backend development fundamentals with relevant projects.",
+
+                "recommendation":
+                    "Proceed to Technical Interview."
+            },
+
+            "interview_questions": [
+
+                {
+                    "difficulty": "Easy",
+                    "targeted_skill": "Python",
+                    "question": "Explain list comprehensions.",
+                    "why_this_question":
+                        "Tests Python fundamentals."
+                },
+
+                {
+                    "difficulty": "Medium",
+                    "targeted_skill": "FastAPI",
+                    "question": "Explain dependency injection in FastAPI.",
+                    "why_this_question":
+                        "Validates backend framework knowledge."
+                },
+
+                {
+                    "difficulty": "Hard",
+                    "targeted_skill": "System Design",
+                    "question": "Design a scalable notification service.",
+                    "why_this_question":
+                        "Evaluates architecture thinking."
+                }
+
+            ]
 }
 
 # ─── SESSION STATE INIT ─────────────────────────────────────────────────────────
@@ -645,134 +768,22 @@ def call_api(endpoint, files=None, data=None):
 
         response.raise_for_status()
 
-        return response.json()
+        result = response.json()
+        result["demo_mode"] = False
+
+        return result
 
     except Exception as e:
 
-        print(f"Backend Error : {e}")
+        demo = DEMO_DATA.copy()
 
-        return {
+        demo["demo_mode"] = True
+        demo["backend_error"] = str(e)
 
-            "resume_analysis": {
-                "candidate_name": "Demo Candidate",
-                "skills": [
-                    "Python",
-                    "FastAPI",
-                    "SQL",
-                    "Docker"
-                ],
-                "experience": "2 Years",
-                "education": "B.Tech Computer Science",
-                "projects": [
-                    "HireLens",
-                    "CLI Chat Application"
-                ],
-                "programming_languages": [
-                    "Python",
-                    "C++"
-                ],
-                "frameworks": [
-                    "FastAPI",
-                    "Streamlit"
-                ],
-                "databases": [
-                    "SQLite"
-                ],
-                "cloud_technologies": [
-                    "Google Colab"
-                ]
-            },
+        print(f"Backend Error: {e}")
 
-            "jd_analysis": {
-                "role": "Backend Developer",
-                "required_skills": [
-                    "Python",
-                    "FastAPI",
-                    "SQL",
-                    "Docker"
-                ],
-                "preferred_skills": [
-                    "Redis"
-                ],
-                "experience": "2 Years",
-                "education": "B.Tech",
-                "responsibilities": [
-                    "Develop APIs",
-                    "Optimize Backend"
-                ],
-                "tools_and_technologies": [
-                    "Python",
-                    "FastAPI",
-                    "Docker"
-                ]
-            },
+    return demo
 
-            "match_breakdown": {
-                "skills_match": 88,
-                "experience_match": 82,
-                "education_match": 94
-            },
-
-            "overall_match": 88,
-
-            "candidate_match": "88%",
-
-            "strengths": [
-                "Strong Python",
-                "FastAPI",
-                "Problem Solving"
-            ],
-
-            "weaknesses": [
-                "Redis",
-                "AWS"
-            ],
-
-            "missing_skills": [
-                "Redis",
-                "AWS"
-            ],
-
-            "risk_score": "Low",
-
-            "status": "Strong Match",
-
-            "reasoning": {
-                "summary":
-                    "Candidate demonstrates strong backend development fundamentals with relevant projects.",
-
-                "recommendation":
-                    "Proceed to Technical Interview."
-            },
-
-            "interview_questions": [
-
-                {
-                    "difficulty": "Easy",
-                    "targeted_skill": "Python",
-                    "question": "Explain list comprehensions.",
-                    "why_this_question":
-                        "Tests Python fundamentals."
-                },
-
-                {
-                    "difficulty": "Medium",
-                    "targeted_skill": "FastAPI",
-                    "question": "Explain dependency injection in FastAPI.",
-                    "why_this_question":
-                        "Validates backend framework knowledge."
-                },
-
-                {
-                    "difficulty": "Hard",
-                    "targeted_skill": "System Design",
-                    "question": "Design a scalable notification service.",
-                    "why_this_question":
-                        "Evaluates architecture thinking."
-                }
-
-            ]
-        }
     
 # ─── AUTH PAGES ─────────────────────────────────────────────────────────────────
 def page_login():
@@ -933,6 +944,24 @@ def page_dashboard():
     render_topbar()
 
     result = st.session_state.analysis_result
+
+# -------------------------------------------------------
+# Demo Mode Banner
+# -------------------------------------------------------
+
+    if result and result.get("demo_mode", False):
+
+        st.warning(
+            """
+    ### ⚠ AI Service Temporarily Unavailable
+
+    The live AI analysis could not be completed due to a temporary service issue.
+
+    The dashboard below is showing **demonstration data** for interface preview only.
+
+    Please retry when the AI service becomes available.
+    """
+        )
 
     if not result:
         st.info("📤 No analysis available yet. Please upload a Resume and Job Description first.")
@@ -1265,6 +1294,24 @@ Experience:
     st.markdown("## 📊 Latest Analysis")
 
     result = st.session_state.analysis_result
+
+    # -------------------------------------------------------
+    # Demo Mode Banner
+    # -------------------------------------------------------
+
+    if result and result.get("demo_mode", False):
+
+        st.warning(
+            """
+    ### ⚠ AI Service Temporarily Unavailable
+
+    The live AI analysis could not be completed due to a temporary service issue.
+
+    The results displayed below are **demonstration data** and **do not represent the uploaded resume or job description**.
+
+    Please retry the analysis later.
+    """
+        )
 
     resume = result.get("resume_analysis", {})
     jd = result.get("jd_analysis", {})
