@@ -3,7 +3,7 @@ from urllib import response
 
 import streamlit as st
 import time
-import json
+import json 
 import requests
 import hashlib
 import datetime
@@ -725,12 +725,71 @@ def inject_css():
         color: var(--subtext) !important;
     }}
 
+    /* ── Brand logo ──
+         Reusable logo styling used across the sidebar, topbar, and
+         auth pages. Keeps the mark crisp and consistently sized
+         without touching any other layout rules above. */
+    .av-logo-sidebar {{
+        display: flex;
+        justify-content: center;
+        padding: 0.4rem 0 0.6rem;
+    }}
+    .av-logo-sidebar img {{
+        height: 140px;
+        width: auto;
+        object-fit: contain;
+    }}
+    .av-logo-topbar {{
+        height: 96px;
+        width: auto;
+        object-fit: contain;
+        margin-right: 0.7rem;
+        vertical-align: middle;
+    }}
+    .av-logo-auth {{
+        display: flex;
+        justify-content: center;
+        margin-bottom: 0.6rem;
+    }}
+    .av-logo-auth img {{
+        height: 160px;
+        width: auto;
+        object-fit: contain;
+    }}
+
     /* Hide Streamlit branding */
     #MainMenu, footer {{ visibility: hidden; }}
     </style>
     """, unsafe_allow_html=True)
 
 inject_css()
+
+# ─── BRAND LOGO ─────────────────────────────────────────────────────────────────
+# Single source of truth for the JSL Works logo so it can be reused on every
+# page (sidebar, topbar, auth screens) without duplicating file-loading code.
+import base64
+import os
+
+LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "jsl_logo.png")
+
+@st.cache_data(show_spinner=False)
+def _get_logo_base64():
+    try:
+        with open(LOGO_PATH, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except FileNotFoundError:
+        return None
+
+def render_logo(css_class="av-logo-sidebar", alt="JSL Works"):
+    """Renders the JSL Works logo as an <img> tag using the given CSS class.
+    Falls back silently (no crash) if the logo file isn't found on disk."""
+    b64 = _get_logo_base64()
+    if not b64:
+        return
+    st.markdown(
+        f"""<div class="{css_class}"><img src="data:image/png;base64,{b64}" alt="{alt}"/></div>""",
+        unsafe_allow_html=True,
+    )
 
 # ─── HELPERS ────────────────────────────────────────────────────────────────────
 def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
@@ -790,6 +849,7 @@ def page_login():
     inject_css()
     c1, c2, c3 = st.columns([1, 1.4, 1])
     with c2:
+        render_logo(css_class="av-logo-auth")
         st.markdown("""
         <div class="auth-card">
             <h2>🔬 HireLens</h2>
@@ -833,6 +893,7 @@ def page_signup():
     inject_css()
     c1, c2, c3 = st.columns([1, 1.4, 1])
     with c2:
+        render_logo(css_class="av-logo-auth")
         st.markdown("### 📝 Create Account")
         name  = st.text_input("Full Name", placeholder="John Doe")
         email = st.text_input("Email", placeholder="you@example.com")
@@ -868,6 +929,7 @@ def page_forgot():
     inject_css()
     c1, c2, c3 = st.columns([1, 1.4, 1])
     with c2:
+        render_logo(css_class="av-logo-auth")
         st.markdown("### 🔓 Reset Password")
         email = st.text_input("Registered Email")
         if st.button("Send Reset Link", type="primary", use_container_width=True):
@@ -883,6 +945,7 @@ def page_forgot():
 def render_sidebar():
     user = st.session_state.current_user
     with st.sidebar:
+        render_logo(css_class="av-logo-sidebar")
         st.markdown(f"""
         <div style="text-align:center; padding: 1rem 0 0.5rem;">
             <div style="font-size:2.5rem;">{user['avatar']}</div>
@@ -928,9 +991,11 @@ def render_sidebar():
 def render_topbar():
     uc = unread_count()
     notif_label = f"🔔 Notifications {'🔴' if uc > 0 else ''}"
+    logo_b64 = _get_logo_base64()
+    logo_html = f'<img class="av-logo-topbar" src="data:image/png;base64,{logo_b64}" alt="JSL Works"/>' if logo_b64 else ""
     st.markdown(f"""
     <div class="av-topbar">
-        <span>🔬 HireLens-MAVS</span>
+        <span style="display:flex; align-items:center;">{logo_html}🔬 HireLens-MAVS</span>
         <div class="nav-links">
             <span>🔍 Search</span>
             <span>{notif_label} ({uc})</span>
